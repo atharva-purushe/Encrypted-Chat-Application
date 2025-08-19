@@ -30,7 +30,7 @@ Deployment Ready: Can be hosted on Render / Heroku / AWS
 
 
 ## ⚡ Quickstart
-1) git clone https://github.com/<your-username>/Encrypted-Chat-Application.git
+1) git clone https://github.com/atharva-purushe/Encrypted-Chat-Application.git
 2) cd Encrypted-Chat-Application
 3) pip install -r requirements.txt
 4) uvicorn app.main:app --reload
