@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: encrypted-chat
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port 10000"
+    plan: free
+    envVars:
+      - key: SECRET_KEY
+        sync: false
+      - key: ALGORITHM
+        sync: false
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: FERNET_SECRET
+        sync: false
