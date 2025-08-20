@@ -2,9 +2,9 @@ services:
   - type: web
     name: encrypted-chat
     env: python
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port 10000"
     plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
     envVars:
       - key: SECRET_KEY
         sync: false
@@ -16,3 +16,5 @@ services:
         sync: false
       - key: FERNET_SECRET
         sync: false
+      - key: PYTHON_VERSION   # 👈 NEW — forces Render to use Python 3.11.9
+        value: 3.11.9
