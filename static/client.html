@@ -1,87 +1,91 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8">
   <title>Chat Client (Phase 2)</title>
   <style>
-    body { font-family: system-ui, sans-serif; margin: 20px; }
-    #log { border: 1px solid #ccc; padding: 10px; height: 320px; overflow-y: auto; border-radius: 8px; }
-    input, button { padding: 8px; margin: 4px 0; }
-    .row { display: flex; gap: 8px; }
-    .row input { flex: 1; }
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    #messages { border: 1px solid #ccc; height: 200px; overflow-y: scroll; padding: 5px; margin-top: 10px; }
+    input, button { margin: 5px; padding: 5px; }
+    .system { color: gray; }
+    .error { color: red; }
   </style>
 </head>
 <body>
-  <h1>Chat Client (Phase 2)</h1>
-  <p>1. Register/Login → get JWT token.<br>
-     2. Paste it below → connect to a room.<br>
-     3. Chat in real-time 🎉</p>
+  <h2>🔐 Chat Client</h2>
+  <p>
+    1. Register/Login → get JWT token <br>
+    2. Paste it below → connect to a room <br>
+    3. Chat in real-time 🎉
+  </p>
 
-  <div>
-    <label>Server (ws):</label>
-      <input id="server" value="wss://encrypted-chat-application.onrender.com/ws">
-  </div>
-  <div>
-    <label>Room:</label>
-    <input id="room" placeholder="general" />
-  </div>
-  <div>
-    <label>JWT Token:</label>
-    <input id="token" placeholder="paste your access_token here" />
-  </div>
-  <div class="row">
-    <button id="connectBtn">Connect</button>
-    <button id="disconnectBtn" disabled>Disconnect</button>
-  </div>
+  <label>Room:</label>
+  <input id="room" value="general"><br>
 
-  <div id="log"></div>
+  <label>JWT Token:</label>
+  <input id="token" size="50" placeholder="Paste your token here"><br>
 
-  <div class="row">
-    <input id="message" placeholder="Type message..." />
-    <button id="sendBtn" disabled>Send</button>
-  </div>
+  <button onclick="connect()">Connect</button>
+  <button onclick="disconnect()">Disconnect</button><br>
+
+  <label>Message:</label>
+  <input id="messageInput" size="40" placeholder="Type a message">
+  <button onclick="sendMessage()">Send</button>
+
+  <div id="messages"></div>
 
   <script>
-    let ws = null;
-    const log = (m) => {
-      const div = document.getElementById('log');
-      const p = document.createElement('div');
-      p.textContent = m;
-      div.appendChild(p);
-      div.scrollTop = div.scrollHeight;
-    };
+    let ws;
+    const messagesDiv = document.getElementById("messages");
 
-    document.getElementById('connectBtn').onclick = () => {
-      const server = document.getElementById('server').value;
-      const room = document.getElementById('room').value || "general";
-      const token = document.getElementById('token').value;
-      if (!token) { alert("Token required. Login/Register first."); return; }
-      const url = `${server}/ws/${encodeURIComponent(room)}?token=${encodeURIComponent(token)}`;
-      ws = new WebSocket(url);
-      ws.onopen = () => {
-        log("[connected]");
-        document.getElementById('sendBtn').disabled = false;
-        document.getElementById('disconnectBtn').disabled = false;
-      };
-      ws.onmessage = (ev) => log(ev.data);
-      ws.onclose = () => {
-        log("[disconnected]");
-        document.getElementById('sendBtn').disabled = true;
-        document.getElementById('disconnectBtn').disabled = true;
-      };
-      ws.onerror = () => log("[error]");
-    };
+    function getWsUrl(room, token) {
+      // Determine protocol (ws for local, wss for deployed)
+      let protocol = window.location.protocol === "https:" ? "wss://" : "ws://";
+      let host = window.location.host; // domain + port if any
+      return `${protocol}${host}/ws/${room}?token=${token}`;
+    }
 
-    document.getElementById('disconnectBtn').onclick = () => {
+    function logMessage(msg, cls="") {
+      let p = document.createElement("p");
+      if (cls) p.className = cls;
+      p.textContent = msg;
+      messagesDiv.appendChild(p);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function connect() {
+      const room = document.getElementById("room").value;
+      const token = document.getElementById("token").value;
+
+      if (!token) {
+        logMessage("[error] Token is required!", "error");
+        return;
+      }
+
+      const wsUrl = getWsUrl(room, token);
+      logMessage(`[system] Connecting to ${wsUrl}`, "system");
+
+      ws = new WebSocket(wsUrl);
+
+      ws.onopen = () => logMessage("[system] Connected ✅", "system");
+      ws.onmessage = (event) => logMessage(event.data);
+      ws.onclose = () => logMessage("[system] Disconnected ❌", "system");
+      ws.onerror = (err) => logMessage("[error] WebSocket error", "error");
+    }
+
+    function disconnect() {
       if (ws) ws.close();
-    };
+    }
 
-    document.getElementById('sendBtn').onclick = () => {
-      const msg = document.getElementById('message').value;
-      if (ws && msg) ws.send(msg);
-      document.getElementById('message').value = '';
-    };
+    function sendMessage() {
+      const input = document.getElementById("messageInput");
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(input.value);
+        input.value = "";
+      } else {
+        logMessage("[error] Not connected", "error");
+      }
+    }
   </script>
 </body>
 </html>
