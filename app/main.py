@@ -1,7 +1,8 @@
 import logging
 from typing import Optional, List
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, Query, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
 from .db import Base, engine, get_db
@@ -31,7 +32,16 @@ Base.metadata.create_all(bind=engine)
 # ✅ Include auth routes
 app.include_router(auth_router)
 
+# ✅ Mount static files (for client.html and favicon.ico)
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 manager = ConnectionManager()
+
+
+@app.get("/", summary="Root Endpoint")
+def root():
+    """Redirect root to the web client"""
+    return RedirectResponse(url="/client")
 
 
 @app.get(
